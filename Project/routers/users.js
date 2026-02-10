@@ -3,6 +3,8 @@ const usersController = require('../controllers/users');
 const followsController = require('../controllers/follows');
 const schemas = require('../schemas/users');
 const followSchemas = require('../schemas/follows');
+const bookmarkController = require('../controllers/bookmarks');
+const BookmarkSchemas = require('../schemas/bookmarks');
 const validate = require('../middlewares/validate');
 const authenticate = require('../middlewares/authenticate');
 const restrictToRolesorOwner = require('../middlewares/restrictToRolesorOwner');
@@ -11,7 +13,11 @@ const imageKit = require('../middlewares/upload');
 
 const router = express.Router();
 
+//get bookmarks
+///users/bookmark
+router.get('/bookmark',authenticate  , bookmarkController.getUserBookMarks);
 
+//search a user
 ///users/search?name=:ammadibrahe //a part of the required name
 ///users/search?email=:mohamed //whole the email
 router.get('/search',authenticate ,validate(schemas.searchUsersSchema), usersController.searchUsers);
