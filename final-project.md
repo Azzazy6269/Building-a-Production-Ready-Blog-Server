@@ -9,6 +9,8 @@ This document outlines the required final project for completing the Node.js cou
 
 ## Table of Contents
 
+0. [Users System](#1-users-system)
+0. [Posts System](#1-posts-system)
 1. [Comments System](#1-comments-system)
 2. [Likes/Reactions System](#2-likesreactions-system)
 3. [Email Integration with Nodemailer](#3-email-integration-with-nodemailer)
@@ -18,6 +20,110 @@ This document outlines the required final project for completing the Node.js cou
 7. [Advanced Enhancements](#7-advanced-enhancements)
 
 ---
+## 0. Users + Posts systems
+## 0.1 Models Layer (`models/`)
+
+**Tasks:**
+- Move User schema to `models/users.js`
+- Create Post schema in `models/posts.js` with the following fields:
+  - `title` (String, required)
+  - `content` (String, required)
+  - `author` (String, required)
+  - `tags` (Array of Strings, optional)
+  - `published` (Boolean, default: false)
+  - `likes` (Number, default: 0)
+  - `timestamps` (enabled)
+- Export Mongoose models from each file
+
+**Example structure:**
+```javascript
+// models/posts.js
+const mongoose = require('mongoose');
+
+const postSchema = new mongoose.Schema({
+    // your schema definition
+}, { timestamps: true });
+
+module.exports = mongoose.model('Post', postSchema);
+```
+
+#### 0.2 Services Layer (`services/`)
+
+**Tasks:**
+- Create `services/users.js` with all user-related database operations:
+  - `createUser(userData)`
+  - `getAllUsers(query)` - with pagination
+  - `getUserById(id)`
+  - `updateUserById(id, userData)`
+  - `deleteUserById(id)`
+- Create `services/posts.js` with all post-related database operations:
+  - `createPost(postData)`
+  - `getAllPosts(query)` - with pagination
+  - `getPostById(id)`
+  - `updatePostById(id, postData)`
+  - `deletePostById(id)`
+
+**Important:** Services should only interact with models/database. They should NOT handle HTTP requests/responses
+
+#### 0.3 Controllers Layer (`controllers/`)
+
+**Tasks:**
+- Create `controllers/users.js` with controller functions:
+  - `createUser(req, res)`
+  - `getAllUsers(req, res)`
+  - `getUserById(req, res)`
+  - `updateUserById(req, res)`
+  - `deleteUserById(req, res)`
+- Create `controllers/posts.js` with controller functions:
+  - `createPost(req, res)`
+  - `getAllPosts(req, res)`
+  - `getPostById(req, res)`
+  - `updatePostById(req, res)`
+  - `deletePostById(req, res)`
+
+**Important:** 
+- Controllers call service functions
+- Controllers handle HTTP responses
+- Use `APIError` class to throw errors (e.g., "Post not found" → `throw new APIError("Post not found", 404)`)
+- Remove all direct `res.status().json()` error responses - use `throw new APIError()` instead
+
+#### 0.4 Routers Layer (`routers/`)
+
+**Tasks:**
+- Create `routers/users.js` using `express.Router()`
+- Create `routers/posts.js` using `express.Router()`
+- Map routes to controller functions
+- Apply validation middleware where needed
+- Register routers in `index.js` using `app.use('/users', userRouter)` and `app.use('/posts', postRouter)`
+
+**Example:**
+```javascript
+// routers/posts.js
+const express = require('express');
+const postsController = require('../controllers/posts');
+const schemas = require('../schemas');
+const validate = require('../middlewares/validate');
+
+const router = express.Router();
+
+router.post('/', validate(schemas.posts.createPostSchema), postsController.createPost);
+router.get('/', validate(schemas.posts.getAllPostsSchema), postsController.getAllPosts);
+// ... other routes
+
+module.exports = router;
+```
+
+---
+
+### 0.5 Implement APIError Class
+
+**Tasks:**
+- Create `utils/APIError.js`
+- Create a custom error class that extends `Error`
+- Include `statusCode` and `isClientError` properties
+- Use `Error.captureStackTrace()` for proper stack traces
+
+
 
 ## 1. Comments System
 
@@ -465,7 +571,8 @@ blog-server/
 │   ├── authenticate.js
 │   ├── errorHandler.js
 │   ├── rateLimiter.js
-│   ├── restrictTo.js
+│   ├── restrictToRolesOnly.js
+│   ├── restrictToRolesorOwner.js
 │   ├── upload.js
 │   └── validate.js
 ├── models/
@@ -478,10 +585,9 @@ blog-server/
 │   ├── posts.js
 │   └── users.js
 ├── routers/
-│   ├── bookmarks.js (or integrated into posts router)
+│   ├── bookmarks.js 
 │   ├── comments.js
 │   ├── donation.js
-│   ├── follows.js (or integrated into users router)
 │   ├── likes.js
 │   ├── notifications.js
 │   ├── posts.js
@@ -501,7 +607,7 @@ blog-server/
 │   ├── imageKit.js
 │   ├── likes.js
 │   ├── notifications.js
-│   ├── passwordReset.js (or in users.js)
+│   ├── passwordReset.js 
 │   ├── posts.js
 │   └── users.js
 ├── templates/
@@ -513,7 +619,6 @@ blog-server/
 │       └── replyNotification.html
 ├── utils/
 │   ├── APIError.js
-│   └── logger.js (optional)
 ├── .env.example
 ├── .gitignore
 ├── index.js
@@ -525,22 +630,20 @@ blog-server/
 
 ## Submission Checklist
 
-Before submitting your project, ensure:
-
-- [ ] All features from sections 1-6 are implemented
-- [ ] Code follows MVC architecture pattern
-- [ ] All endpoints are properly authenticated and authorized
-- [ ] Error handling is comprehensive
-- [ ] Input validation is implemented for all endpoints
-- [ ] Security middleware is properly configured
-- [ ] Database indexes are added for performance
-- [ ] Email templates are professional and functional
-- [ ] File uploads work correctly with ImageKit
-- [ ] Password reset flow is secure and functional
-- [ ] All routes are tested and working
-- [ ] README.md is comprehensive with setup instructions
-- [ ] Environment variables are documented in `.env.example`
-- [ ] Code is clean, well-organized, and commented where necessary
+- [✔] All features from sections 1-6 are implemented
+- [✔] Code follows MVC architecture pattern
+- [✔] All endpoints are properly authenticated and authorized
+- [✔] Error handling is comprehensive
+- [✔] Input validation is implemented for all endpoints
+- [✔] Security middleware is properly configured
+- [✔] Database indexes are added for performance
+- [✔] Email templates are professional and functional
+- [✔] File uploads work correctly with ImageKit
+- [✔] Password reset flow is secure and functional
+- [✔] All routes are tested and working
+- [✔] README.md is comprehensive with setup instructions
+- [✔] Environment variables are documented in `.env.example`
+- [✔] Code is clean, well-organized, and commented where necessary
 
 ---
 
@@ -553,26 +656,9 @@ Before submitting your project, ensure:
 - [Winston Docs](https://github.com/winstonjs/winston)
 - [MongoDB Text Search](https://www.mongodb.com/docs/manual/text-search/)
 
-### Tutorials
-- Email integration tutorials
-- File upload best practices
-- API security best practices
-- Docker deployment guides
 
 ---
 
-## Final Notes
 
-This project is designed to demonstrate your understanding of:
-- RESTful API design
-- MVC architecture
-- Authentication and authorization
-- Third-party API integration
-- File handling
-- Email services
-- Database design and optimization
-- Security best practices
 
-**Remember:** Quality over quantity. It's better to have fewer features implemented well than many features implemented poorly. Focus on clean code, proper error handling, and following best practices.
-
-Good luck with your final project! 🚀
+Good luck ! 🚀
